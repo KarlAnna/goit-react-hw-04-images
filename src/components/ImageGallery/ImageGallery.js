@@ -6,7 +6,6 @@ const ImageGallary = ({ imgs, toggleModal, onClick }) => {
     return (
         <ul className="imageGallery">
             {imgs.map((img) => 
-                // <li key={img.id} className="imageGalleryItem" onClick={toggleModal}>
                 <ImageGallaryItem 
                     key={img.id}
                     webformatURL={img.webformatURL} 
@@ -15,7 +14,6 @@ const ImageGallary = ({ imgs, toggleModal, onClick }) => {
                     onClick={onClick} 
                     toggleModal={toggleModal}
                 />
-                // </li>
             )}
         </ul>
     )

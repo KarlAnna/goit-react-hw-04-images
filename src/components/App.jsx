@@ -1,77 +1,73 @@
-import React, { Component } from "react";
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Searchbar from './Searchbar/Searchbar';
+import Loader from './Loader/Loader';
+import { fetchImgs } from './services/api';
+import ImageGallary from './ImageGallery/ImageGallery';
+import Button from './Button/Button';
+import Modal from './Modal/Modal';
+import '../styles.css';
 
-import Searchbar from './Searchbar/Searchbar'
-import Loader from "./Loader/Loader";
-import { fetchImgs } from './services/api'
-import ImageGallary from './ImageGallery/ImageGallery'
-import Button from "./Button/Button";
-import Modal from "./Modal/Modal";
-import '../styles.css'
+export default function App() {
+  const [imgs, setImgs] = useState([]);
+  const [totalImgs, setTotalImgs] = useState(null);
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-class App extends Component {
-
-  state = {
-    imgs: null,
-    totalImgs: null,
-    isLoading: false,
-    showModal: false,
-    page: 1,
-    query: '',
-    largeImageURL: ''
-  }
-
-  searchImgs = async query => {
-    if (query.length === 0) {
-      return Notify.failure('Please enter something')
+  useEffect(() => {
+    if (query === '') {
+      return;
     }
-    await this.setState({ isLoading: true, query, page: 1 })
-    
-    fetchImgs(query, this.state.page).then(data => {
-      const { hits, totalHits } = data
-      this.setState({ isLoading: false, totalImgs: totalHits })
-      if (hits.length === 0) {
-        return Notify.failure('Sorry, there are no images matching your search query. Please try again.')
-      }
-      this.setState({ imgs: hits, page: this.state.page + 1 })
-    })
-  }
+    setIsLoading(true);
+    fetchImgs(query, page)
+      .then(data => {
+        if (data.hits.length === 0) {
+          return toast.error('Nothing was found on your request');
+        }
+        setTotalImgs(data.totalHits);
+        setImgs(prevImgs => [...prevImgs, ...data.hits]);
+      })
+      .finally(setIsLoading(false));
+  }, [query, page]);
 
-  onLoadMore = () => {
-    const { query, page, imgs } = this.state
-    
-    this.setState({ isLoading: true })
-    fetchImgs(query, page).then(data => {
-      this.setState({ isLoading: false, imgs: [...imgs, ...data.hits], page: page + 1 })
-    })
-  }
+  const onLoadMore = () => {
+      setPage(prevPage => prevPage + 1)
+  };
 
-  toggleModal = () => {
-    this.setState({showModal: !this.state.showModal})
-  }
+  const onSubmit = searchValue => {
+    setQuery(searchValue);
+    setPage(1);
+    setImgs([]);
+    setIsLoading(false)
+  };
 
-  getlargeImageURL = largeImageURL => {
-    this.setState({largeImageURL})
-  }
+  const toggleModal = () => {
+    setShowModal(prev => !prev);
+  };
 
-  render() {
-    const { imgs, isLoading, totalImgs, showModal, largeImageURL } = this.state
-    const {toggleModal, searchImgs, getlargeImageURL, onLoadMore} = this
-    
-    return (
-      <div className="app">
-        {showModal && <Modal imgUrl={largeImageURL} toggleModal={toggleModal} />}
-        <Searchbar onSubmit={searchImgs} />
-        {isLoading && <Loader />}
-        {imgs !== null ?
-          (<>
-            <ImageGallary imgs={imgs} toggleModal={toggleModal} onClick={getlargeImageURL} />
-            {imgs.length !== totalImgs && <Button onClick={onLoadMore} />}
-          </>)
-        : null}
-      </div>
-    )
-  }
+  const getlargeImageURL = largeImageURL => {
+    setLargeImageURL(largeImageURL);
+  };
+
+  return (
+    <div className="app">
+      {showModal && <Modal imgUrl={largeImageURL} toggleModal={toggleModal} />}
+      <Searchbar onSubmit={onSubmit} />
+      {isLoading && <Loader />}
+      {imgs.length > 0 ? (
+        <>
+          <ImageGallary
+            imgs={imgs}
+            toggleModal={toggleModal}
+            onClick={getlargeImageURL}
+          />
+          {imgs.length !== totalImgs && <Button onClick={onLoadMore} />}
+        </>
+      ) : null}
+    </div>
+  );
 }
-
-export default App

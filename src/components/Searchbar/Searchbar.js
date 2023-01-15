@@ -1,27 +1,30 @@
 import PropTypes from 'prop-types';
-import React, { Component } from "react";
+import React, { useState } from "react";
 import { BsSearch } from "react-icons/bs";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import '../../styles.css'
 
-class Searchbar extends Component {
+export default function Searchbar({ onSubmit }) {
     
-    state = {
-        searchValue: ''
-    }
+    const [searchValue, setSearchValue] = useState('')
 
-    formSubmitHandler = (e) => {
+    const formSubmitHandler = e => {
         e.preventDefault()
-        this.props.onSubmit(this.state.searchValue)
+        if (searchValue.trim() === '') {
+            return toast.error("Please, enter something")
+        }
+        onSubmit(searchValue)
+        setSearchValue('')
     }
 
-    handlesearchValueChange = (e) => {
-        this.setState({searchValue: e.target.value})
+    const handlesearchValueChange = e => {
+        setSearchValue(e.currentTarget.value.toLowerCase())
     }
 
 
-    render() {
-        const {formSubmitHandler, handlesearchValueChange} = this
-        return (
+    return (
+        <>
         <header className="searchbar">
             <form onSubmit={formSubmitHandler} className="searchForm">
                 <button type="submit" className="searchForm-button">
@@ -29,22 +32,32 @@ class Searchbar extends Component {
                     <span className="searchForm-button-label">Search</span>
                 </button>
 
-                    <input
-                        onChange={handlesearchValueChange}
-                className="searchForm-input"
-                type="text"
-                autoComplete="off"
-                autoFocus
-                placeholder="Search images and photos"
+                <input
+                    onChange={handlesearchValueChange}
+                    className="searchForm-input"
+                    type="text"
+                    autoComplete="off"
+                    autoFocus
+                    placeholder="Search images and photos"
                 />
             </form>
         </header>
+        <ToastContainer
+                position="bottom-center"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
+        </>
     )
-    }
 }
 
 Searchbar.propTypes = {
     onSubmit: PropTypes.func
 }
-
-export default Searchbar
